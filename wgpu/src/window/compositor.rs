@@ -84,20 +84,6 @@ impl Compositor {
             log::info!("Available adapters: {available_adapters:#?}");
         }
 
-        // #[allow(unsafe_code)]
-        // let compatible_surface = compatible_window
-        //     .as_ref()
-        //     .and_then(|w| w.window_handle().ok())
-        //     .and_then(|handle| match handle.as_raw() {
-        //         RawWindowHandle::Win32(handle) => Some(handle.hwnd.get() as *mut std::ffi::c_void),
-        //         _ => None,
-        //     })
-        //     .and_then(|window_ptr| unsafe {
-        //         instance
-        //             .create_surface_unsafe(wgpu::SurfaceTargetUnsafe::CompositionVisual(window_ptr))
-        //             .ok()
-        //     });
-
         #[allow(unsafe_code)]
         let compatible_surface =
             compatible_window.and_then(|window| instance.create_surface(window).ok());
