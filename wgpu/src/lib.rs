@@ -60,6 +60,7 @@ pub use settings::Settings;
 
 #[cfg(feature = "geometry")]
 pub use geometry::Geometry;
+use wgpu::wgt::Dx12SwapchainKind;
 
 use crate::core::renderer;
 use crate::core::{Background, Color, Font, Pixels, Point, Rectangle, Size, Transformation};
@@ -868,7 +869,14 @@ impl renderer::Headless for Renderer {
         }
 
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::from_env().unwrap_or(wgpu::Backends::PRIMARY),
+            backends: wgpu::Backends::DX12,
+            backend_options: wgpu::BackendOptions {
+                dx12: wgpu::Dx12BackendOptions {
+                    presentation_system: Dx12SwapchainKind::DxgiFromVisual,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
             flags: wgpu::InstanceFlags::empty(),
             ..wgpu::InstanceDescriptor::default()
         });
