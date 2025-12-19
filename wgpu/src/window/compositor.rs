@@ -1,4 +1,6 @@
 //! Connect a window with a renderer.
+use wgpu::rwh::RawWindowHandle;
+
 use crate::core::Color;
 use crate::core::backend;
 use crate::core::renderer;
@@ -53,8 +55,15 @@ impl Compositor {
         compatible_window: impl compositor::Window,
         shell: Shell,
     ) -> Result<Self, Error> {
-        let instance = wgpu::util::new_instance_with_webgpu_detection(wgpu::InstanceDescriptor {
-            backends: settings.backends,
+        let instance = wgpu::util::new_instance_with_webgpu_detection(&wgpu::InstanceDescriptor {
+            backends: wgpu::Backends::DX12,
+            backend_options: wgpu::BackendOptions {
+                dx12: wgpu::Dx12BackendOptions {
+                    presentation_system: wgpu::wgt::Dx12SwapchainKind::DxgiFromVisual,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
             flags: if cfg!(feature = "strict-assertions") {
                 wgpu::InstanceFlags::debugging()
             } else {
@@ -69,7 +78,7 @@ impl Compositor {
         #[cfg(not(target_arch = "wasm32"))]
         if log::max_level() >= log::LevelFilter::Info {
             let available_adapters: Vec<_> = instance
-                .enumerate_adapters(settings.backends)
+                .enumerate_adapters(wgpu::Backends::DX12)
                 .await
                 .iter()
                 .map(wgpu::Adapter::get_info)
@@ -131,12 +140,7 @@ impl Compositor {
 
                 log::info!("Available alpha modes: {alpha_modes:#?}");
 
-                let preferred_alpha =
-                    if alpha_modes.contains(&wgpu::CompositeAlphaMode::PreMultiplied) {
-                        wgpu::CompositeAlphaMode::PreMultiplied
-                    } else {
-                        wgpu::CompositeAlphaMode::Auto
-                    };
+                let preferred_alpha = wgpu::CompositeAlphaMode::PreMultiplied;
 
                 format.zip(Some(preferred_alpha))
             })
@@ -278,9 +282,7 @@ impl graphics::Compositor for Compositor {
 
         let mut settings = Settings::from(settings);
 
-        if let Some(backends) = wgpu::Backends::from_env() {
-            settings.backends = backends;
-        }
+        settings.backends = wgpu::Backends::DX12;
 
         if let Some(present_mode) = present_mode_from_env() {
             settings.present_mode = present_mode;
