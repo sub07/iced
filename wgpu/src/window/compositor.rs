@@ -1,4 +1,7 @@
 //! Connect a window with a renderer.
+use wgpu::rwh::HasWindowHandle;
+use wgpu::rwh::RawWindowHandle;
+
 use crate::core::Color;
 use crate::graphics::color;
 use crate::graphics::compositor;
@@ -83,8 +86,23 @@ impl Compositor {
         }
 
         #[allow(unsafe_code)]
-        let compatible_surface =
-            compatible_window.and_then(|window| instance.create_surface(window).ok());
+        let compatible_surface = compatible_window
+            .and_then(|w| w.window_handle().ok())
+            .and_then(|handle| match handle.as_raw() {
+                RawWindowHandle::Win32(handle) => Some(handle.hwnd.get() as *mut c_void),
+                _ => None,
+            })
+            .and_then(|window_ptr| unsafe {
+                instance
+                    .create_surface_unsafe(wgpu::SurfaceTargetUnsafe::CompositionVisual(window_ptr))
+            });
+
+        // let compatible_surface = compatible_window.and_then(|window| {
+        //     instance
+        //         .create_surface(window)
+        //         // .create_surface_unsafe(
+        //         .ok()
+        // });
 
         let adapter_options = wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::from_env()
