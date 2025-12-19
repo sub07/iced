@@ -77,33 +77,30 @@ impl Compositor {
         #[cfg(not(target_arch = "wasm32"))]
         if log::max_level() >= log::LevelFilter::Info {
             let available_adapters: Vec<_> = instance
-                .enumerate_adapters(settings.backends)
+                .enumerate_adapters(wgpu::Backends::DX12)
                 .iter()
                 .map(wgpu::Adapter::get_info)
                 .collect();
             log::info!("Available adapters: {available_adapters:#?}");
         }
 
-        #[allow(unsafe_code)]
-        let compatible_surface = compatible_window
-            .as_ref()
-            .and_then(|w| w.window_handle().ok())
-            .and_then(|handle| match handle.as_raw() {
-                RawWindowHandle::Win32(handle) => Some(handle.hwnd.get() as *mut std::ffi::c_void),
-                _ => None,
-            })
-            .and_then(|window_ptr| unsafe {
-                instance
-                    .create_surface_unsafe(wgpu::SurfaceTargetUnsafe::CompositionVisual(window_ptr))
-                    .ok()
-            });
+        // #[allow(unsafe_code)]
+        // let compatible_surface = compatible_window
+        //     .as_ref()
+        //     .and_then(|w| w.window_handle().ok())
+        //     .and_then(|handle| match handle.as_raw() {
+        //         RawWindowHandle::Win32(handle) => Some(handle.hwnd.get() as *mut std::ffi::c_void),
+        //         _ => None,
+        //     })
+        //     .and_then(|window_ptr| unsafe {
+        //         instance
+        //             .create_surface_unsafe(wgpu::SurfaceTargetUnsafe::CompositionVisual(window_ptr))
+        //             .ok()
+        //     });
 
-        // let compatible_surface = compatible_window.and_then(|window| {
-        //     instance
-        //         .create_surface(window)
-        //         // .create_surface_unsafe(
-        //         .ok()
-        // });
+        #[allow(unsafe_code)]
+        let compatible_surface =
+            compatible_window.and_then(|window| instance.create_surface(window).ok());
 
         let adapter_options = wgpu::RequestAdapterOptions {
             power_preference: wgpu::PowerPreference::from_env()
@@ -147,14 +144,7 @@ impl Compositor {
 
                 log::info!("Available alpha modes: {alpha_modes:#?}");
 
-                let preferred_alpha =
-                    if alpha_modes.contains(&wgpu::CompositeAlphaMode::PostMultiplied) {
-                        wgpu::CompositeAlphaMode::PostMultiplied
-                    } else if alpha_modes.contains(&wgpu::CompositeAlphaMode::PreMultiplied) {
-                        wgpu::CompositeAlphaMode::PreMultiplied
-                    } else {
-                        wgpu::CompositeAlphaMode::Auto
-                    };
+                let preferred_alpha = wgpu::CompositeAlphaMode::PreMultiplied;
 
                 format.zip(Some(preferred_alpha))
             })
