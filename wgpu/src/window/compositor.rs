@@ -89,7 +89,7 @@ impl Compositor {
         let compatible_surface = compatible_window
             .and_then(|w| w.window_handle().ok())
             .and_then(|handle| match handle.as_raw() {
-                RawWindowHandle::Win32(handle) => Some(handle.hwnd.get() as *mut c_void),
+                RawWindowHandle::Win32(handle) => Some(handle.hwnd.get() as *mut std::ffi::c_void),
                 _ => None,
             })
             .and_then(|window_ptr| unsafe {
