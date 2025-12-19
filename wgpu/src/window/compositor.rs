@@ -53,7 +53,14 @@ impl Compositor {
         shell: Shell,
     ) -> Result<Self, Error> {
         let instance = wgpu::util::new_instance_with_webgpu_detection(&wgpu::InstanceDescriptor {
-            backends: settings.backends,
+            backends: wgpu::Backends::DX12,
+            backend_options: wgpu::BackendOptions {
+                dx12: wgpu::Dx12BackendOptions {
+                    presentation_system: wgpu::wgt::Dx12SwapchainKind::DxgiFromVisual,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
             flags: if cfg!(feature = "strict-assertions") {
                 wgpu::InstanceFlags::debugging()
             } else {
@@ -253,9 +260,7 @@ impl graphics::Compositor for Compositor {
             None | Some("wgpu") => {
                 let mut settings = Settings::from(settings);
 
-                if let Some(backends) = wgpu::Backends::from_env() {
-                    settings.backends = backends;
-                }
+                settings.backends = wgpu::Backends::DX12;
 
                 if let Some(present_mode) = settings::present_mode_from_env() {
                     settings.present_mode = present_mode;
