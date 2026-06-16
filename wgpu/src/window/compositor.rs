@@ -55,7 +55,7 @@ impl Compositor {
         compatible_window: impl compositor::Window,
         shell: Shell,
     ) -> Result<Self, Error> {
-        let instance = wgpu::util::new_instance_with_webgpu_detection(&wgpu::InstanceDescriptor {
+        let instance = wgpu::util::new_instance_with_webgpu_detection(wgpu::InstanceDescriptor {
             backends: wgpu::Backends::DX12,
             backend_options: wgpu::BackendOptions {
                 dx12: wgpu::Dx12BackendOptions {
